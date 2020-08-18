@@ -13,6 +13,10 @@
 
 ## Start pwn
 
+File(s): [fms](https://github.com/thuatuit001/Writeups-WannaGameChampionship-1/blob/master/fms)
+
+
+
 ## It is simple, but not easy
 
 ## RSA 1
