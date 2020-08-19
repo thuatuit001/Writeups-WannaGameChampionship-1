@@ -26,14 +26,14 @@ kali@kali:~/Desktop/WGC August 2020$ ./fms
 Is any body here? (yes or no)
 yes
 This isn't enough.
+kali@kali:~/Desktop/WGC August 2020$ ./fms
+Is any body here? (yes or no)
+Co Hien xinh dep
+Co Hien xinh dep
+This isn't enough.
 ```
 
-Chúng ta thấy có 2 trường hợp:
-
-- \[Nữ] Anh có xin lỗi em không? --> \[Nam] Không. --> \[Nữ] Buồn, anh là đồ tồi!
-- \[Nữ] Anh có xin lỗi em không? --> \[Nam] Có. --> \[Nữ] Anh nghĩ xin lỗi là xong à?
-
-Nếu mà người yêu các ông như vậy thì các ông phải làm gì? Đầu tiên chắc chắn phải có xin lỗi, sau đó thì đánh vào điểm yếu của ẻm: ẻm thích quà thì cho em quà, ẻm thích ăn thì cho ẻm ăn, ... Để biết điểm yếu của ẻm là gì thì chúng ta phải hiểu được ẻm - chúng ta dùng IDA Pro để xem mã giả của hàm main:
+Có 3 trường hợp như trên. Chúng ta mở file bằng IDA Pro và xem mã giả của hàm `main`:
 
 ```
 int __cdecl main(int argc, const char **argv, const char **envp)
@@ -58,7 +58,7 @@ int __cdecl main(int argc, const char **argv, const char **envp)
 }
 ```
 
-Sau khi
+Trường hợp input chúng ta nhập vào không chứa `no` và `yes` thì chương trình in ra input của chúng ta. Điều đáng chú ý ở đây là lệnh `printf(&s);` thiếu tham số format string (viết tắt là fms như tên file). Lỗ hổng format string là như thế nào, chúng ta có thể khai thác gì từ nó, cách khai thác như thế nào - xem ở [video](https://www.youtube.com/watch?v=0WvrSfcdq1I) này (video khá ngắn gọn và dễ hiểu, chỉ cần xem bằng cả con tim là được).
 
 ## It is simple, but not easy
 
