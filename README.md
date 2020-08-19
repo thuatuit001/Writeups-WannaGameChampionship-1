@@ -80,7 +80,7 @@ int check_key()
 }
 ```
 
-Hàm này kiểm tra nếu giá trị biến toàn cục `key_number` bằng `2020` thì gọi hàm `cat_flag`:
+Hàm này kiểm tra nếu giá trị biến toàn cục `key_number` bằng `2020` thì trả về hàm `cat_flag`:
 
 ```
 int cat_flag()
