@@ -58,7 +58,7 @@ int __cdecl main(int argc, const char **argv, const char **envp)
 }
 ```
 
-Trường hợp input chúng ta nhập vào không chứa `no` và `yes` thì chương trình in ra input của chúng ta. Điều đáng chú ý ở đây là lệnh `printf(&s);` thiếu tham số format string (viết tắt là fms như tên file). Lỗ hổng format string là như thế nào, chúng ta có thể khai thác gì từ nó, cách khai thác như thế nào - xem ở [video](https://www.youtube.com/watch?v=0WvrSfcdq1I) này (video khá ngắn gọn và dễ hiểu, chỉ cần xem bằng cả con tim là được).
+Trường hợp input chúng ta nhập vào không chứa `no` và `yes` thì chương trình in ra input của chúng ta. Điều đáng chú ý ở đây là lệnh `printf(&s);` thiếu tham số format string (viết tắt là fms như tên file). Lỗ hổng format string là như thế nào, chúng ta có thể khai thác gì từ nó, cách khai thác như thế nào - xem ở [video 1](https://www.youtube.com/watch?v=0WvrSfcdq1I) và [video 2](https://www.youtube.com/watch?v=t1LH9D5cuK4) (video khá ngắn gọn và dễ hiểu, chỉ cần xem bằng cả con tim là được).
 
 ## It is simple, but not easy
 
