@@ -226,9 +226,13 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
 Thanh ghi `eax` lưu giá trị `0x1b` - có nghĩa là chúng ta đã gán giá trị cho `key_number` thành công.
 
 Như đã nói ở trên, hàm `printf` đếm số ký tự trước `%n` và gán vào vị trí mà `%n` trỏ tới, mà giá trị chúng ta muốn gán là `2020` - có nghĩa trước `%n` phải có `2020` ký tự, trong khi độ dài input tối đa mà chương trình cho chúng ta nhập là `64`. Để giả quyết vấn đề này, chúng ta sử dụng ký hiệu `$`, cụ thể như sau:
+
 ##########################
+
 \#  Cú pháp: `%X$Y<fms>`  \#
+
 ##########################
+
 - Chúng ta đã biết rằng nếu địa chỉ của `key_number` ở đầu input, thì format string thứ `4` sẽ trỏ tới địa chỉ đó --> X = 4. Đặt biệt là nếu làm
 
 ## It is simple, but not easy
