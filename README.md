@@ -537,7 +537,7 @@ User : JOHN
 
 ```
 
-Ném hash password của John lên [CrackStation](https://crackstation.net/), được kết quả là chuỗi rỗng. Lấy sha1 của chuỗi rỗng ta được ``:
+Ném `Hash NTLM` của John lên [CrackStation](https://crackstation.net/), được kết quả là chuỗi rỗng. Lấy `sha1` của chuỗi rỗng ta được:
 
 ```
 boo@DESKTOP-GGURATD:~$ echo -n '' | sha1sum
