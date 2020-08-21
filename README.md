@@ -13,7 +13,7 @@
 
 ## Start pwn
 
-File(s): [fms](https://github.com/thuatuit001/Writeups-WannaGameChampionship-1/blob/master/fms)
+File(s): [fms](https://github.com/thuatuit001/Writeups-WannaGameChampionship-1/blob/master/fms).
 
 fms là gì nhỉ... feel my style? :D. Đầu tiên, chúng ta chạy thử file:
 
@@ -275,7 +275,7 @@ Good[*] Process './fms' stopped with exit code 0 (pid 43923)
 
 ## It is simple, but not easy
 
-File(s): [slc](https://github.com/thuatuit001/Writeups-WannaGameChampionship-1/blob/master/slc)
+File(s): [slc](https://github.com/thuatuit001/Writeups-WannaGameChampionship-1/blob/master/slc).
 
 Mình mò bài pwn cuối cả ngày trời không ra, ngó qua bài này 30' là ra :(. Đúng là đôi khi chúng ta hay chạy theo những điều hảo huyền mà bỏ quên hạnh phúc ngay bên cạnh :(.
 
@@ -435,7 +435,7 @@ $ exit
 
 ## RSA 1
 
-File(s): [chall1.py](https://github.com/thuatuit001/Writeups-WannaGameChampionship-1/blob/master/chall1.py)
+File(s): [chall1.py](https://github.com/thuatuit001/Writeups-WannaGameChampionship-1/blob/master/chall1.py).
 
 Bài này `e` rất lớn, chúng ta dùng `Wiener Attack`. Mình thì dốt toán nên mình dùng tool [RSHack](https://github.com/zweisamkeit/RSHack) thôi chứ mình cũng không biết Wiener Attack ra ngô ra khoai như thế nào nữa:
 
@@ -502,4 +502,46 @@ Type "help", "copyright", "credits" or "license" for more information.
 
 ## Extract password from registry files
 
-Coming soon...
+File(s): [sa](https://github.com/thuatuit001/Writeups-WannaGameChampionship-1/blob/master/sa), [sy](https://github.com/thuatuit001/Writeups-WannaGameChampionship-1/blob/master/sy).
+
+Sau một hồi tìm hiểu thì mình biết 2 file registry này là SAM (Security Account Manager) và SYSTEM.
+
+Sau một hồi tìm hiểu nữa thì mình tìm được [video](https://www.youtube.com/watch?v=jEMW9vYG62Y) hướng dẫn dump password từ 2 file này. Mình làm theo và được kết quả như sau:
+
+```
+
+  .#####.   mimikatz 2.2.0 (x64) #19041 Aug  9 2020 22:45:17
+ .## ^ ##.  "A La Vie, A L'Amour" - (oe.eo)
+ ## / \ ##  /*** Benjamin DELPY `gentilkiwi` ( benjamin@gentilkiwi.com )
+ ## \ / ##       > http://blog.gentilkiwi.com/mimikatz
+ '## v ##'       Vincent LE TOUX             ( vincent.letoux@gmail.com )
+  '#####'        > http://pingcastle.com / http://mysmartlogon.com   ***/
+
+mimikatz # lsadump::sam /system:C:\Users\boo\Desktop\sy /SAM:C:\Users\boo\Desktop\sa
+Domain : JOHN-PC
+SysKey : 97fd831aaa54840800ead7b16fc2413e
+Local SID : S-1-5-21-806928618-3257427745-877340488
+
+SAMKey : 1edbf838753ddf7adae5440d5a6ff2b1
+
+RID  : 000001f4 (500)
+User : Administrator
+  Hash NTLM: 31d6cfe0d16ae931b73c59d7e0c089c0
+
+RID  : 000001f5 (501)
+User : Guest
+
+RID  : 000003e8 (1000)
+User : JOHN
+  Hash NTLM: 31d6cfe0d16ae931b73c59d7e0c089c0
+
+```
+
+Ném hash password của John lên [CrackStation](https://crackstation.net/), được kết quả là chuỗi rỗng. Lấy sha1 của chuỗi rỗng ta được ``:
+
+```
+boo@DESKTOP-GGURATD:~$ echo -n '' | sha1sum
+da39a3ee5e6b4b0d3255bfef95601890afd80709  -
+```
+
+Flag: `wannagame{da39a3ee5e6b4b0d3255bfef95601890afd80709}`
